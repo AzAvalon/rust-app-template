@@ -1,0 +1,26 @@
+name: Pre-commit
+
+on:
+  workflow_dispatch:
+  pull_request:
+
+# Limit to 1 concurrent run per workflow and branch
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  pre-commit:
+    uses: AzAvalon/workflows/.github/workflows/_pre_commit.yml@459f938778be2a1d56a5cf963a5bbc715bd78c23 # 0.2.0
+    permissions:
+      contents: read
+    with:
+      # Toolchain of the rustfmt and clippy hooks; keep it on the base image's
+      # renovate: datasource=github-releases depName=rust-lang/rust
+      rust-version: "1.100.0"
+      github-client-id: ${{ vars.CI_APP_CLIENT_ID }}
+    secrets:
+      github-private-key: ${{ secrets.CI_APP_PRIVATE_KEY }}

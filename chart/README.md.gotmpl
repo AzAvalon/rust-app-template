@@ -1,0 +1,90 @@
+{{ template "chart.header" . }}
+
+{{ template "chart.badgesSection" . }}
+
+{{ template "chart.description" . }}
+
+## TL;DR
+
+```console
+helm install my-release oci://ghcr.io/azavalon/charts/{{ template "chart.name" . }} --version {{ template "chart.version" . }}
+```
+
+## Introduction
+
+This chart deploys [{{ template "chart.name" . }}](https://github.com/AzAvalon/rust-app-template)
+on a [Kubernetes](https://kubernetes.io) cluster with the [Helm](https://helm.sh)
+package manager.
+
+## Prerequisites
+
+- Kubernetes 1.29+
+- Helm 3.9.0+ (OCI registries)
+- The Gateway API CRDs, only with `ingress.enabled`
+
+## Installing the Chart
+
+Install the chart with the release name `my-release` in the namespace `my-namespace`:
+
+```console
+helm install my-release oci://ghcr.io/azavalon/charts/{{ template "chart.name" . }} \
+  --version {{ template "chart.version" . }} \
+  --namespace my-namespace --create-namespace
+```
+
+The [Parameters](#parameters) section lists what can be set. Give them with
+`--set key=value` or in a values file:
+
+```console
+helm install my-release oci://ghcr.io/azavalon/charts/{{ template "chart.name" . }} -f my-values.yaml
+```
+
+> **Tip**: List all releases using `helm list -aA`
+
+## Uninstalling the Chart
+
+```console
+helm uninstall my-release --namespace my-namespace
+```
+
+## Configuration and installation details
+
+### App settings
+
+`settings` is a map of environment variables of the app container. Values go
+through `tpl`, so they can refer to other values. Put secrets in `extraEnv`
+(`valueFrom.secretKeyRef`) or `extraEnvFrom`, never in `settings`.
+
+### Private images
+
+If the image is private, create a pull secret and set it through
+`global.imagePullSecrets`:
+
+```console
+kubectl create secret docker-registry regcred --docker-server=ghcr.io \
+  --docker-username=<user> --docker-password=<token with read:packages>
+```
+
+```yaml
+global:
+  imagePullSecrets:
+    - regcred
+```
+
+### Network policy
+
+With `networkPolicy.enabled`, only the pods labelled
+`<fullname>-client: "true"`, the ingress controller (when `ingress.enabled`)
+and `networkPolicy.extraIngress` reach the app. Set
+`networkPolicy.allowExternalEgress: false` to limit egress to DNS and
+`networkPolicy.extraEgress`.
+
+## Dependencies
+
+{{ template "chart.requirementsTable" . }}
+
+## Parameters
+
+{{ template "chart.valuesTable" . }}
+
+{{ template "helm-docs.versionFooter" . }}

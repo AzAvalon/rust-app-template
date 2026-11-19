@@ -1,0 +1,9 @@
+target/
+coverage.info
+junit.xml
+chart/charts/
+*.tgz
+.idea/
+.vscode/
+.DS_Store
+.claude/settings.local.json

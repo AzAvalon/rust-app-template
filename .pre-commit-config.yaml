@@ -1,0 +1,43 @@
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-toml
+      - id: check-yaml
+        exclude: ^chart/
+      - id: check-added-large-files
+      - id: check-merge-conflict
+  - repo: https://github.com/pre-commit/mirrors-prettier
+    rev: v3.1.0
+    hooks:
+      - id: prettier
+        name: Format yaml files using `prettier`
+        files: \.(yaml|yml)$
+        exclude: ^chart/
+  # The Rust toolchain comes from the system (CI: the rust-version input of
+  # the pre-commit workflow).
+  - repo: local
+    hooks:
+      - id: cargo-fmt
+        name: cargo fmt
+        entry: cargo fmt --all
+        language: system
+        types: [rust]
+        pass_filenames: false
+      - id: cargo-clippy
+        name: cargo clippy
+        entry: cargo clippy --locked --all-targets --all-features -- -D warnings
+        language: system
+        types_or: [rust, toml]
+        pass_filenames: false
+  - repo: https://github.com/norwoodj/helm-docs
+    rev: v1.14.2
+    hooks:
+      - id: helm-docs-container
+        entry: jnorwood/helm-docs:v1.14.2
+  - repo: https://github.com/renovatebot/pre-commit-hooks
+    rev: 44.239.1
+    hooks:
+      - id: renovate-config-validator

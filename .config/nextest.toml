@@ -1,0 +1,15 @@
+# cargo-nextest configuration: https://nexte.st/docs/configuration/
+
+[store]
+# Fixed path, also under `cargo llvm-cov nextest` (which builds in its own
+# target dir): the CI copies target/nextest/default/junit.xml.
+dir = "target/nextest"
+
+[profile.default]
+# Report every failure, do not stop at the first one.
+fail-fast = false
+failure-output = "immediate-final"
+slow-timeout = { period = "60s" }
+
+[profile.default.junit]
+path = "junit.xml"

@@ -1,0 +1,54 @@
+{{- if .Values.networkPolicy.enabled }}
+apiVersion: {{ include "common.capabilities.networkPolicy.apiVersion" . }}
+kind: NetworkPolicy
+metadata:
+  name: {{ include "common.names.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "common.labels.standard" . | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      {{- include "common.labels.matchLabels" . | nindent 6 }}
+  policyTypes:
+    - Ingress
+    - Egress
+  {{- if .Values.networkPolicy.allowExternalEgress }}
+  egress:
+    - {}
+  {{- else }}
+  egress:
+    - ports:
+        # Allow dns resolution
+        - port: 53
+          protocol: UDP
+        - port: 53
+          protocol: TCP
+    {{- if .Values.networkPolicy.extraEgress }}
+    {{- include "common.tplvalues.render" (dict "value" .Values.networkPolicy.extraEgress "context" $) | nindent 4 }}
+    {{- end }}
+  {{- end }}
+  ingress:
+    - ports:
+        - port: http
+      {{- if not .Values.networkPolicy.allowExternal }}
+      from:
+        # Any pod given the client label
+        - podSelector:
+            matchLabels:
+              {{ include "common.names.fullname" . }}-client: "true"
+        {{- if and .Values.ingress.enabled .Values.networkPolicy.ingressNSMatchLabels }}
+        - namespaceSelector:
+            matchLabels:
+              {{- include "common.tplvalues.render" (dict "value" .Values.networkPolicy.ingressNSMatchLabels "context" $) | nindent 14 }}
+          {{- with .Values.networkPolicy.ingressNSPodMatchLabels }}
+          podSelector:
+            matchLabels:
+              {{- include "common.tplvalues.render" (dict "value" . "context" $) | nindent 14 }}
+          {{- end }}
+        {{- end }}
+      {{- end }}
+    {{- if .Values.networkPolicy.extraIngress }}
+    {{- include "common.tplvalues.render" (dict "value" .Values.networkPolicy.extraIngress "context" $) | nindent 4 }}
+    {{- end }}
+{{- end }}

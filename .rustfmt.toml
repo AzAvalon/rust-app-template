@@ -1,0 +1,6 @@
+# Stable options only: the hooks run stable rustfmt, the clippy workflow
+# nightly rustfmt, and both must format the same way.
+edition = "2024"
+newline_style = "Unix"
+use_field_init_shorthand = true
+use_try_shorthand = true
