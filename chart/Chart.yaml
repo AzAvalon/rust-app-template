@@ -3,8 +3,8 @@ name: rust-app-template
 description: Rust application template Helm chart
 type: application
 # Set by .github/scripts/edit-version.sh at release time
-version: 0.0.0
-appVersion: "0.0.0"
+version: 1.0.0
+appVersion: "1.0.0"
 dependencies:
   - name: common
     repository: oci://registry-1.docker.io/bitnamicharts

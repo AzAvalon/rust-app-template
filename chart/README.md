@@ -1,13 +1,13 @@
 # rust-app-template
 
-![Version: 0.0.0](https://img.shields.io/badge/Version-0.0.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 0.0.0](https://img.shields.io/badge/AppVersion-0.0.0-informational?style=flat-square)
+![Version: 1.0.0](https://img.shields.io/badge/Version-1.0.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 1.0.0](https://img.shields.io/badge/AppVersion-1.0.0-informational?style=flat-square)
 
 Rust application template Helm chart
 
 ## TL;DR
 
 ```console
-helm install my-release oci://ghcr.io/azavalon/charts/rust-app-template --version 0.0.0
+helm install my-release oci://ghcr.io/azavalon/charts/rust-app-template --version 1.0.0
 ```
 
 ## Introduction
@@ -28,7 +28,7 @@ Install the chart with the release name `my-release` in the namespace `my-namesp
 
 ```console
 helm install my-release oci://ghcr.io/azavalon/charts/rust-app-template \
-  --version 0.0.0 \
+  --version 1.0.0 \
   --namespace my-namespace --create-namespace
 ```
 
@@ -107,7 +107,7 @@ and `networkPolicy.extraIngress` reach the app. Set
 | image.pullSecrets | array | `[]` | image pull secrets of this chart, added to global.imagePullSecrets |
 | image.registry | string | `"ghcr.io/azavalon"` | image registry |
 | image.repository | string | `"rust-app-template"` | image repository |
-| image.tag | string | `"0.0.0"` | image tag, set at release time |
+| image.tag | string | `"1.0.0"` | image tag, set at release time |
 | ingress.enabled | bool | `false` | expose the app through the Gateway API (HTTPRoute) |
 | ingress.gateway.annotations | map | `{}` | Gateway annotations |
 | ingress.gateway.className | string | `"traefik"` | GatewayClass |
