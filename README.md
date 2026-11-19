@@ -9,7 +9,8 @@ things (see [Start a new app](#start-a-new-app)).
 | Path                       | What it is                                                                                         |
 | -------------------------- | -------------------------------------------------------------------------------------------------- |
 | `src/main.rs`              | Entry point (`app` binary). Reads `APP_PORT` and starts the server.                                |
-| `src/lib.rs`               | The app. Only answers `GET /healthz` for now, with the standard library; one test.                 |
+| `src/lib.rs`               | The app. Only answers `GET /healthz` for now, with the standard library; unit tests inline.        |
+| `tests/`                   | Integration tests: start the `app` binary and call it over TCP. Run with the unit tests.           |
 | `Cargo.toml`, `Cargo.lock` | The crate: edition 2024, no dependency, `unsafe` forbidden, clippy pedantic.                       |
 | `.cargo/config.toml`       | CPU baselines: x86-64-v3 on amd64, Graviton2+ features on arm64.                                   |
 | `.config/nextest.toml`     | cargo-nextest settings and the JUnit report the CI uploads.                                        |
