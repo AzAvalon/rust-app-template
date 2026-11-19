@@ -1,0 +1,90 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended",
+    "helpers:pinGitHubActionDigests"
+  ],
+  "schedule": [
+    "* * * * 0,6"
+  ],
+  "pre-commit": {
+    "enabled": true
+  },
+  "lockFileMaintenance": {
+    "enabled": true,
+    "schedule": [
+      "* * 1 * *"
+    ]
+  },
+  "customManagers": [
+    {
+      "customType": "regex",
+      "description": "Versions with a `# renovate: datasource=... depName=...` comment on the line above",
+      "managerFilePatterns": [
+        "/^\\.github/workflows/.+\\.ya?ml$/"
+      ],
+      "matchStrings": [
+        "# renovate: datasource=(?<datasource>[a-z-]+) depName=(?<depName>[^\\s]+)\\s+[\\w-]+:\\s*\"?[^\\s:]+:(?<currentValue>[^\\s\"@]+)(?:@(?<currentDigest>sha256:[a-f0-9]+))?\"?",
+        "# renovate: datasource=(?<datasource>[a-z-]+) depName=(?<depName>[^\\s]+)\\s+[\\w-]+:\\s*\"?(?<currentValue>[^\\s\"@:]+)\"?\\s"
+      ]
+    }
+  ],
+  "packageRules": [
+    {
+      "matchManagers": [
+        "dockerfile"
+      ],
+      "addLabels": [
+        "docker"
+      ]
+    },
+    {
+      "matchManagers": [
+        "github-actions"
+      ],
+      "addLabels": [
+        "github_actions"
+      ]
+    },
+    {
+      "matchManagers": [
+        "cargo"
+      ],
+      "addLabels": [
+        "rust"
+      ]
+    },
+    {
+      "description": "The Rust toolchain of the pre-commit hooks follows the base image",
+      "matchPackageNames": [
+        "rust-lang/rust"
+      ],
+      "groupName": "base image"
+    },
+    {
+      "matchManagers": [
+        "pre-commit"
+      ],
+      "addLabels": [
+        "pre-commit"
+      ],
+      "schedule": "every 1 months on the first day of the month"
+    },
+    {
+      "description": "One PR for the base image, in the Dockerfile and in the CI container",
+      "matchPackageNames": [
+        "ghcr.io/azavalon/base"
+      ],
+      "groupName": "base image"
+    },
+    {
+      "matchUpdateTypes": [
+        "minor",
+        "patch",
+        "digest"
+      ],
+      "automerge": true,
+      "automergeType": "pr"
+    }
+  ]
+}

@@ -1,0 +1,19 @@
+# chart-testing (https://github.com/helm/chart-testing) configuration, for
+# running `ct lint` / `ct install` by hand. The CI uses helm lint, kubeconform
+# and a kind install from AzAvalon/workflows instead.
+#   ct lint --config ct.yaml
+chart-dirs:
+  - chart
+charts:
+  - chart
+remote: origin
+target-branch: develop
+lint-conf: lintconf.yaml
+# The chart version is written at release time (0.0.0 in the repository)
+check-version-increment: false
+validate-chart-schema: true
+validate-chart-values: true
+validate-yaml: true
+exclude-deprecated: true
+validate-maintainers: false
+excluded-charts: []

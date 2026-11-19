@@ -1,0 +1,41 @@
+name: PR Cleanup
+
+# Deletes the images and charts a pull request pushed to GHCR, and its
+# Actions caches, once it is closed, merged or not. Fork PRs never push, so they are skipped. Run it by
+# hand with a PR number to retry the cleanup of a PR closed earlier.
+
+on:
+  pull_request:
+    types:
+      - closed
+  workflow_dispatch:
+    inputs:
+      pr-number:
+        description: "Number of the closed pull request to clean up"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  packages:
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.pull_request.head.repo.full_name == github.repository }}
+    uses: AzAvalon/workflows/.github/workflows/_pr_packages_cleanup.yml@459f938778be2a1d56a5cf963a5bbc715bd78c23 # 0.2.0
+    permissions:
+      contents: read
+      packages: write
+    with:
+      packages: rust-app-template,charts/rust-app-template
+      pr-number: ${{ inputs.pr-number }}
+
+  caches:
+    if: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository }}
+    uses: AzAvalon/workflows/.github/workflows/_pr_cache_cleanup.yml@459f938778be2a1d56a5cf963a5bbc715bd78c23 # 0.2.0
+    permissions:
+      contents: read
+    with:
+      ref: refs/pull/${{ github.event.number }}/merge
+      github-client-id: ${{ vars.CI_APP_CLIENT_ID }}
+    secrets:
+      github-private-key: ${{ secrets.CI_APP_PRIVATE_KEY }}

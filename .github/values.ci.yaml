@@ -1,0 +1,17 @@
+# Values for the chart tests and the kind integration tests.
+# edit-values-ci.sh sets image.tag to the image built for the PR.
+global: {}
+
+image:
+  pullPolicy: Always
+
+hpa:
+  enabled: true
+  maxReplicaCount: 2
+
+pdb:
+  create: true
+
+networkPolicy:
+  enabled: true
+  allowExternalEgress: false

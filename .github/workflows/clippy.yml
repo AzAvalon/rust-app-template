@@ -1,0 +1,29 @@
+name: Clippy
+
+# After each push to develop, runs `clippy --fix` and nightly rustfmt, and
+# opens a pull request with whatever they changed.
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - develop
+
+# Limit to 1 concurrent run per workflow and branch
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  clippy:
+    uses: AzAvalon/workflows/.github/workflows/_clippy.yml@459f938778be2a1d56a5cf963a5bbc715bd78c23 # 0.2.0
+    permissions:
+      contents: read # the App token pushes the branch and opens the PR
+    with:
+      # renovate: datasource=docker depName=ghcr.io/azavalon/base
+      container-image: ghcr.io/azavalon/base:0.2.0-rust-debian-dev@sha256:c5d45c742729e32404ff552a619099b5154f7f72a99e6d199644ea05b929fff3
+      github-client-id: ${{ vars.CI_APP_CLIENT_ID }}
+    secrets:
+      github-private-key: ${{ secrets.CI_APP_PRIVATE_KEY }}

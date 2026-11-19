@@ -1,0 +1,28 @@
+[package]
+name = "rust-app-template"
+version = "0.0.0"
+description = "Template for a containerised Rust application"
+edition = "2024"
+rust-version = "1.100"
+repository = "https://github.com/AzAvalon/rust-app-template"
+publish = false
+
+[[bin]]
+name = "app"
+path = "src/main.rs"
+
+[dependencies]
+# SIGTERM/SIGINT handling: as PID 1 in a container the process would ignore
+# SIGTERM, and Kubernetes would kill it only after the grace period.
+ctrlc = { version = "3.5.3", features = ["termination"] }
+
+[lints.rust]
+unsafe_code = "forbid"
+
+[lints.clippy]
+pedantic = { level = "warn", priority = -1 }
+
+[profile.release]
+codegen-units = 1
+lto = "thin"
+strip = true

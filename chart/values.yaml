@@ -1,0 +1,195 @@
+global:
+  # -- global images registry
+  imageRegistry:
+  # -- global images pull secrets
+  imagePullSecrets: []
+image:
+  # -- image registry
+  registry: ghcr.io/azavalon
+  # -- image repository
+  repository: rust-app-template
+  # -- image tag, set at release time
+  tag: 0.0.0
+  # -- image pull policy
+  pullPolicy: IfNotPresent
+  # -- (array) image pull secrets of this chart, added to global.imagePullSecrets
+  pullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+# -- Environment variables of the app container. Values go through `tpl`.
+settings:
+  # -- (string) print a backtrace when the app panics
+  RUST_BACKTRACE: "1"
+  # -- (string) port the app listens on; keep it equal to service.targetPort
+  APP_PORT: "{{ .Values.service.targetPort }}"
+# -- (array) extra env entries for the pods, appended after `settings`: any
+# name, plain `value` or `valueFrom`, e.g. a key of an existing Secret. Must
+# not repeat a `settings` name
+extraEnv: []
+# -- (array) extra envFrom sources for the pods. An `env` entry of the same
+# name wins
+extraEnvFrom: []
+serviceAccount:
+  # -- (bool) create a ServiceAccount
+  create: false
+  # -- (map) ServiceAccount annotations (e.g. cloud IAM role bindings)
+  annotations: {}
+  # -- (string) name of the ServiceAccount; the full name when empty and create is true
+  name: ""
+  # -- (bool) mount the API token in the pods; only for apps that call the Kubernetes API
+  automount: false
+replicaCount: 1
+# -- (bool) inject the environment variables of every Service of the namespace
+# into the pods (docker links style); off, use DNS names instead
+enableServiceLinks: false
+# -- (int) Grace period before Kubernetes force-kills the container during termination
+terminationGracePeriodSeconds: 30
+# -- Lifecycle hooks for the main container
+lifecycle:
+  preStop:
+    # -- (bool) Enable preStop sleep hook
+    enabled: true
+    # -- (int) Number of seconds to sleep in preStop hook before SIGTERM handling proceeds
+    # Allows kube-proxy to gracefully remove the endpoints from iptables
+    sleepSeconds: 5
+hpa:
+  # -- (bool) whether to enable the HorizontalPodAutoscaler
+  enabled: false
+  # -- minimum replica count
+  minReplicaCount: 1
+  # -- maximum replica count
+  maxReplicaCount: 3
+  # -- threshold in percentage of CPU utilization that triggers scaling
+  averageUtilization: 70
+  # -- behavior of the HPA
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 180  # 3 minutes
+      policies:
+        - type: Pods
+          value: 1
+          periodSeconds: 180
+# -- update strategy
+updateStrategy:
+  type: RollingUpdate
+# -- PodDisruptionBudget, created only with more than one replica or with the HPA
+pdb:
+  # -- (bool) create the PodDisruptionBudget
+  create: false
+  # -- (string) minimum number or percentage of pods that must stay available
+  minAvailable: ""
+  # -- (string) maximum number or percentage of pods that may be unavailable;
+  # defaults to 1 when both are empty
+  maxUnavailable: ""
+# -- NetworkPolicy of the pods. By default only the pods with the
+# `<fullname>-client: "true"` label, the ingress controller (when
+# ingress.enabled) and extraIngress get in; egress stays open.
+networkPolicy:
+  # -- (bool) create the NetworkPolicy
+  enabled: false
+  # -- (bool) accept connections from any source
+  allowExternal: false
+  # -- (bool) allow the pods to reach anything. When false, only DNS and
+  # extraEgress.
+  allowExternalEgress: true
+  # -- (array) extra ingress rules
+  extraIngress: []
+  # -- (array) extra egress rules
+  extraEgress: []
+  # -- (map) labels of the namespace of the ingress controller, let in when
+  # ingress.enabled
+  ingressNSMatchLabels:
+    kubernetes.io/metadata.name: ingress-traefik
+  # -- (map) labels of the ingress controller pods in that namespace
+  ingressNSPodMatchLabels:
+    app.kubernetes.io/name: traefik
+service:
+  # -- service type
+  type: ClusterIP
+  # -- service port
+  port: 80
+  # -- container port the app listens on
+  targetPort: 8000
+# -- (map) pod annotations
+podAnnotations: {}
+# -- (map) pod security context
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 1001
+  runAsGroup: 1001
+  fsGroup: 1001
+  seccompProfile:
+    type: RuntimeDefault
+# -- (map) container security context
+securityContext:
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: true
+  capabilities:
+    drop:
+      - ALL
+# -- (string) size limit of the writable /tmp (the root filesystem is read-only)
+tmpSizeLimit: 64Mi
+# Request = limit: no memory overcommit.
+resources:
+  requests:
+    memory: 128Mi
+    cpu: 100m
+  limits:
+    memory: 128Mi
+nodeSelector: {}
+tolerations: []
+affinity: {}
+livenessProbe:
+  enabled: true
+  # -- (string) HTTP path of the probe
+  path: /healthz
+  initialDelaySeconds: 5
+  periodSeconds: 20
+  timeoutSeconds: 1
+  failureThreshold: 3
+  successThreshold: 1
+readinessProbe:
+  enabled: true
+  # -- (string) HTTP path of the probe
+  path: /healthz
+  initialDelaySeconds: 5
+  periodSeconds: 5
+  timeoutSeconds: 1
+  failureThreshold: 5
+  successThreshold: 1
+# -- (list) extra volumes to be added to the pod
+extraVolumes: []
+# -- (list) extra volume mounts to be added to the container
+extraVolumeMounts: []
+ingress:
+  # -- (bool) expose the app through the Gateway API (HTTPRoute)
+  enabled: false
+  # -- (string) hostname of the route; required when enabled
+  hostname: ""
+  gateway:
+    # -- (bool) create a Gateway for this app; otherwise route.parentRefs
+    enabled: false
+    # -- (map) Gateway annotations
+    annotations: {}
+    # -- (string) GatewayClass
+    className: traefik
+    # -- (array) Gateway listeners; the HTTPRoute attaches to the first one
+    listeners:
+      - name: web-{{ include "common.names.fullname" $ }}
+        protocol: HTTP
+        port: 8000
+        allowedRoutes:
+          namespaces:
+            from: Same
+  # -- Gateway API HTTPRoute resource configuration
+  route:
+    # -- (map) Annotations to add to the HTTPRoute metadata
+    annotations: {}
+    # -- (map) Labels to add to the HTTPRoute metadata
+    labels: {}
+    # -- (array) Parent Gateway references; if empty and gateway.enabled is true, uses the created Gateway
+    parentRefs: []
+    # -- (string) Optional path prefix the app is served under (e.g. "/app"); stripped before the request reaches the app
+    pathPrefix: ""
+    # -- (array) Extra Rules to add to the HTTPRoute
+    extraRules: []

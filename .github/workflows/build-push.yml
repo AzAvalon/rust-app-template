@@ -1,0 +1,88 @@
+name: Docker, Chart & Integration Tests
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - "dockerfiles/**"
+      - ".dockerignore"
+      - "src/**"
+      - "Cargo.toml"
+      - "Cargo.lock"
+      - ".cargo/**"
+      - "chart/**"
+      - ".github/values.ci.yaml"
+      - ".github/scripts/edit-values-ci.sh"
+      - ".github/workflows/build-push.yml"
+  release:
+    types: [published]
+
+# Limit to 1 concurrent run per workflow and branch
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  # Reusable workflow `with` expressions accept needs/github/... but not env.
+  env-vars:
+    runs-on: ubuntu-26.04
+    outputs:
+      SERVICE_NAME: rust-app-template
+      TAG: ${{ github.event.release.tag_name || (github.event_name == 'pull_request' && format('pr-{0}.{1}', github.event.pull_request.number, github.event.pull_request.head.sha)) || format('manual-{0}', github.sha) }}
+      CHART_VERSION: ${{ github.event.release.tag_name || format('0.0.0-pr.{0}.{1}', github.event.pull_request.number, github.event.pull_request.head.sha) }}
+      GIT_BRANCH: ${{ github.event.release.target_commitish || (github.event_name == 'pull_request' && github.head_ref) || github.ref_name }}
+      # Releases and PRs from this repository push; fork PRs get no secrets
+      # and manual runs only build.
+      PUSH: ${{ github.event_name == 'release' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository) }}
+    steps:
+      - run: "true"
+
+  test-chart:
+    uses: AzAvalon/workflows/.github/workflows/_tests_chart.yml@459f938778be2a1d56a5cf963a5bbc715bd78c23 # 0.2.0
+    permissions:
+      contents: read
+
+  build-push-docker:
+    needs:
+      - env-vars
+    uses: AzAvalon/workflows/.github/workflows/_build_push_docker.yml@459f938778be2a1d56a5cf963a5bbc715bd78c23 # 0.2.0
+    permissions:
+      contents: read
+      id-token: write # cosign keyless signing
+      packages: write # push to ghcr.io
+    with:
+      service-name: ${{ needs.env-vars.outputs.SERVICE_NAME }}
+      docker-tag: ${{ needs.env-vars.outputs.TAG }}
+      docker-extra-tag: ${{ needs.env-vars.outputs.GIT_BRANCH == 'main' && 'latest' || '' }}
+      docker-push: ${{ needs.env-vars.outputs.PUSH == 'true' }}
+      github-client-id: ${{ vars.CI_APP_CLIENT_ID }}
+    secrets:
+      github-private-key: ${{ secrets.CI_APP_PRIVATE_KEY }}
+
+  publish-chart:
+    needs:
+      - env-vars
+      - test-chart
+    if: ${{ needs.env-vars.outputs.PUSH == 'true' }}
+    uses: AzAvalon/workflows/.github/workflows/_publish_chart.yml@459f938778be2a1d56a5cf963a5bbc715bd78c23 # 0.2.0
+    permissions:
+      contents: read
+      packages: write # push to ghcr.io
+    with:
+      service-name: ${{ needs.env-vars.outputs.SERVICE_NAME }}
+      chart-version: ${{ needs.env-vars.outputs.CHART_VERSION }}
+
+  integration-tests:
+    needs:
+      - env-vars
+      - build-push-docker
+      - test-chart
+    if: ${{ needs.env-vars.outputs.PUSH == 'true' }}
+    uses: AzAvalon/workflows/.github/workflows/_integration_tests.yml@459f938778be2a1d56a5cf963a5bbc715bd78c23 # 0.2.0
+    permissions:
+      contents: read
+    with:
+      docker-tag: ${{ needs.env-vars.outputs.TAG }}

@@ -1,0 +1,43 @@
+name: Tests
+
+on:
+  workflow_dispatch:
+  release:
+    types: [published]
+  push:
+    branches:
+      - develop
+  pull_request:
+    paths:
+      - "src/**"
+      - "tests/**"
+      - "Cargo.toml"
+      - "Cargo.lock"
+      - ".cargo/**"
+      - ".config/**"
+      - "Makefile"
+      - ".github/workflows/tests.yml"
+
+# Limit to 1 concurrent run per workflow and branch
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  tests:
+    uses: AzAvalon/workflows/.github/workflows/_tests_app.yml@459f938778be2a1d56a5cf963a5bbc715bd78c23 # 0.2.0
+    permissions:
+      contents: read
+    with:
+      test-id: rust-app-template
+      # Only PR and develop runs save the cache; releases and manual runs reuse it
+      skip-save-cache-github: ${{ github.event_name == 'release' || github.event_name == 'workflow_dispatch' }}
+      # The tests run in the dev base image: Rust toolchain, cargo-nextest, cargo-llvm-cov
+      # renovate: datasource=docker depName=ghcr.io/azavalon/base
+      container-image: ghcr.io/azavalon/base:0.2.0-rust-debian-dev@sha256:c5d45c742729e32404ff552a619099b5154f7f72a99e6d199644ea05b929fff3
+      github-client-id: ${{ vars.CI_APP_CLIENT_ID }}
+    secrets:
+      github-private-key: ${{ secrets.CI_APP_PRIVATE_KEY }}

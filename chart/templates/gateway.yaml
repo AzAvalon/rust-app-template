@@ -1,0 +1,41 @@
+{{- if and .Values.ingress.gateway.enabled .Values.ingress.enabled }}
+{{- $_ := required "ingress.hostname is required when gateway is enabled" .Values.ingress.hostname }}
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: {{ include "common.names.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "common.labels.standard" . | nindent 4 }}
+  {{- with .Values.ingress.gateway.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  gatewayClassName: {{ .Values.ingress.gateway.className }}
+  listeners:
+    {{- range .Values.ingress.gateway.listeners }}
+    - name: {{ tpl .name $ }}
+      protocol: {{ .protocol }}
+      port: {{ .port }}
+      hostname: {{ $.Values.ingress.hostname | quote }}
+      {{- if .tls }}
+      tls:
+        mode: {{ .tls.mode }}
+        {{- if .tls.certificateRefs }}
+        certificateRefs:
+          {{- range .tls.certificateRefs }}
+          - name: {{ tpl .name $ }}
+            kind: {{ .kind }}
+            {{- if .group }}
+            group: {{ .group }}
+            {{- end }}
+          {{- end }}
+        {{- end }}
+      {{- end }}
+      {{- if .allowedRoutes }}
+      allowedRoutes:
+        {{- toYaml .allowedRoutes | nindent 8 }}
+      {{- end }}
+    {{- end }}
+{{- end }}
