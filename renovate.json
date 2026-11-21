@@ -5,15 +5,24 @@
     "helpers:pinGitHubActionDigests"
   ],
   "schedule": [
-    "* * * * 0,6"
+    "* 0-5 1,15 * *"
   ],
+  "vulnerabilityAlerts": {
+    "description": "Security fixes are opened right away, ignoring the schedule",
+    "schedule": [
+      "at any time"
+    ],
+    "addLabels": [
+      "security"
+    ]
+  },
   "pre-commit": {
     "enabled": true
   },
   "lockFileMaintenance": {
     "enabled": true,
     "schedule": [
-      "* * 1 * *"
+      "* 0-5 1,15 * *"
     ]
   },
   "customManagers": [
@@ -68,7 +77,10 @@
       "addLabels": [
         "pre-commit"
       ],
-      "schedule": "every 1 months on the first day of the month"
+      "description": "pre-commit/prek hooks release too often: once a month only",
+      "schedule": [
+        "* 0-5 1 * *"
+      ]
     },
     {
       "description": "One PR for the base image, in the Dockerfile and in the CI container",
